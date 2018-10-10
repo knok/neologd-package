@@ -9,6 +9,7 @@ import os
 import sys
 import logging
 import glob
+import tempfile
 
 neologd_url = "https://github.com/neologd/mecab-ipadic-neologd"
 
@@ -44,6 +45,15 @@ def build_on_git(gitdir):
     os.system(cmd)
     popd(cwd)
 
+def binary_debian_files(rootdir):
+    pass
+
+def make_pkg_binary(work_dir, date_str):
+    with tempfile.TemporaryDirectory(dir=work_dir) as td:
+        pkg_dir = os.path.join(td, "mecab-ipadic-neologd-%s" % date_str)
+        os.makedirs(pkg_dir)
+        deb_dir = os.path.join(pkg_dir, 'debian')
+
 def get_args():
     p = argparse.ArgumentParser()
     p.add_argument('--work-dir', default='/var/tmp')
@@ -68,6 +78,12 @@ def main():
         logging.info("Binary dic file %s exists, skip build" % dic_fname)
     else:
         build_on_git(git_dir)
+        dic_fname = get_dic_fname(git_dir)
+
+    # build debian binary package
+    date_str = dic_fname[:-11] # remove /matrix
+    date_str = date_str[-8:] # remove prefix
+    make_pkg_binary(args.work_dir, date_str)
 
 if __name__ == '__main__':
     main()
