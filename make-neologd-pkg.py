@@ -27,6 +27,12 @@ def git_clone(workdir, depth):
     os.system(cmd)
     popd(cwd)
 
+def build_on_git(gitdir):
+    cwd = pushd(gitdir)
+    cmd = "./libexec/make-mecab-ipadic-neologd.sh"
+    os.system(cmd)
+    popd(cwd)
+
 def get_args():
     p = argparse.ArgumentParser()
     p.add_argument('--work-dir', default='/var/tmp')
@@ -36,11 +42,17 @@ def get_args():
 
 def main():
     args = get_args()
+    # git source code dir
     git_dir = os.path.join(args.work_dir, 'mecab-ipadic-neologd')
+
+    # invoke git clone
     if os.path.exists(git_dir):
         logging.info("Directory %s exists, skip clone" % git_dir)
     else:
         git_clone(args.work_dir, args.depth)
+
+    # build on git repo
+    build_on_git(git_dir)
 
 if __name__ == '__main__':
     main()
