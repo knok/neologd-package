@@ -8,6 +8,7 @@ import argparse
 import os
 import sys
 import logging
+import glob
 
 neologd_url = "https://github.com/neologd/mecab-ipadic-neologd"
 
@@ -26,6 +27,16 @@ def git_clone(workdir, depth):
         cmd += " --depth %d" % depth
     os.system(cmd)
     popd(cwd)
+
+def get_dic_fname(git_dir):
+    build_dir = os.path.join(git_dir, "build")
+    if not os.path.isdir(build_dir):
+        return None
+    pat = os.path.join(build_dir, "mecab-ipadic-2.7.0-*-neologd-*")
+    dir_list = glob.glob(pat)
+    dir_list.sort()
+    ret = os.path.join(dir_list[-1], "matrix.bin")
+    return ret
 
 def build_on_git(gitdir):
     cwd = pushd(gitdir)
@@ -52,7 +63,11 @@ def main():
         git_clone(args.work_dir, args.depth)
 
     # build on git repo
-    build_on_git(git_dir)
+    dic_fname = get_dic_fname(git_dir)
+    if dic_fname is not None and os.path.exists(dic_fname):
+        logging.info("Binary dic file %s exists, skip build" % dic_fname)
+    else:
+        build_on_git(git_dir)
 
 if __name__ == '__main__':
     main()
