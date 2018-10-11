@@ -12,6 +12,7 @@ import glob
 import tempfile
 
 neologd_url = "https://github.com/neologd/mecab-ipadic-neologd"
+VERSION = "0.1"
 
 def pushd(newdir):
     cwd = os.path.abspath(".")
@@ -46,7 +47,74 @@ def build_on_git(gitdir):
     popd(cwd)
 
 def binary_debian_files(rootdir):
-    pass
+    # compat
+    fname = os.path.join(rootdir, 'compat')
+    with open(fname, 'w') as f:
+        f.write("9\n")
+    # README.Debian
+    fname = os.path.join(rootdir, 'README.debian')
+    with open(fname, 'w') as f:
+        f.write("""mecab-ipadic-neologd for Debian
+---------------------------------------------
+mecab-ipadic-NEologd is customized system dictionary for MeCab.
+
+This dictionary includes many neologisms (new word), which are
+extracted from many language resources on the Web.
+
+When you analyze the Web documents, it's better to use this system
+dictionary and default one (ipadic) together.
+
+You can use the dictionary with -d /var/lib/mecab/dic/ipadic-neologd
+argument.
+""")
+    # control
+    fname = os.path.join(rootdir, 'control')
+    with open(fname, 'w') as f:
+        f.write("""Source: mecab-ipadic-neologd
+Section: text
+Priority: optional
+Build-Depends: debhelper (>= 10)
+Build-Depends-Indep: mecab-utils (>= 0.93), curl, git, libmecab-dev, xz
+Maintainer: Natural Language Processing Japanese <team+pkgnlpja@tracker.debian.org>
+Uploaders: NOKUBI Takatsugu <knok@daionet.gr.jp>
+Standards-Version: 4.1.5
+Homepage: https://github.com/neologd/mecab-ipadic-neologd
+
+Package: mecab-ipadic-neologd
+Architecuture: any
+Pre-Depends: dpkg
+Depends: ${misc:Depends}, mecab (>= 0.93)
+Description: Neologism dictionay for MeCab (binary format)
+ mecab-ipadic-NEologd is customized system dictionary for MeCab.
+ This dictionary includes many neologisms (new word), which are
+ extracted from many language resources on the Web.
+ When you analyze the Web documents, it's better to use this
+ system dictionary and default one (ipadic) together.
+
+Package: mecab-ipadic-neologd-csv
+Architecuture: any
+Pre-Depends: dpkg
+Depends: ${misc:Depends}, mecab (>= 0.93)
+Description: Neologism dictionay for MeCab (csv format)
+ The dictionary source csv files derived from the original ipadic.
+""")
+    # rules
+    fname = os.path.join(rootdir, 'rules')
+    with open(fname, 'w') as f:
+        f.write("""#!/usr/bin/make -f
+#
+%%:
+	dh $@
+""")
+    # changelog
+    fname = os.path.join(rootdir, 'control')
+    with open(fname, 'w') as f:
+        f.write("""mecab-ipadic-neologd (0.0.6~20180505gitbb428d2ac-1) unstable; urgency=medium
+
+  * packaged by make-neologd-pkg.py (%s)
+
+ -- NOKUBI Takatsugu <knok@daionet.gr.jp>  Wed, 10 Oct 2018 11:38:33 +0900
+""" % VERSION)
 
 def make_pkg_binary(work_dir, date_str):
     with tempfile.TemporaryDirectory(dir=work_dir) as td:
