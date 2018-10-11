@@ -116,13 +116,20 @@ Description: Neologism dictionay for MeCab (csv format)
 
  -- NOKUBI Takatsugu <knok@daionet.gr.jp>  Wed, 10 Oct 2018 11:38:33 +0900
 """ % (VERSION, debian_version))
+    # install
+    fname = os.path.join(rootdir, 'mecab-ipadic-neologd.install')
+    with open(fname, 'w') as f:
+        f.write('var/lib/mecab/dic/ipadic-neologd/*')
+    fname = os.path.join(rootdir, 'mecab-ipadic-neologd-csv.install')
+    with open(fname, 'w') as f:
+        f.write('usr/share/mecab/dic/ipadic-neologd/*')
 
 def copy_bin_files(git_dir, debian_dir):
     dic_dir = get_dic_fname(git_dir)
     dic_dir = os.path.dirname(dic_dir)
     # copy binary dictionary files
     ## make package dir
-    bin_dist = os.path.join(debian_dir, "mecab-ipadic-neologd/var/lib/mecab/dic/ipadic-neologd")
+    bin_dist = os.path.join(debian_dir, "../var/lib/mecab/dic/ipadic-neologd")
     os.makedirs(bin_dist, exist_ok=True)
     ## copy files
     ### .bin
@@ -144,10 +151,7 @@ def copy_csv_files(git_dir, debian_dir):
     dic_dir = os.path.dirname(dic_dir)
     # copy csv dictionary files
     ## make package dir
-    bin_dist = os.path.join(debian_dir, "mecab-ipadic-neologd-csv/var/lib/mecab/dic/ipadic-neologd")
-    os.makedirs(bin_dist, exist_ok=True)
-    ## make package dir
-    bin_dist = os.path.join(debian_dir, "mecab-ipadic-neologd-csv/var/lib/mecab/dic/ipadic-neologd")
+    bin_dist = os.path.join(debian_dir, "../usr/share/mecab/dic/ipadic-neologd")
     os.makedirs(bin_dist, exist_ok=True)
     ## copy files
     ### .csv
@@ -168,8 +172,6 @@ def make_pkg_binary(work_dir, git_dir, date_str):
         binary_debian_files(deb_dir, date_str)
         copy_bin_files(git_dir, deb_dir)
         copy_csv_files(git_dir, deb_dir)
-        import pdb; pdb.set_trace();
-        pass
 
 def get_args():
     p = argparse.ArgumentParser()
