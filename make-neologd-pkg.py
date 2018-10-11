@@ -115,7 +115,7 @@ Description: Neologism dictionay for MeCab (csv format)
   * packaged by make-neologd-pkg.py (%s)
 
  -- NOKUBI Takatsugu <knok@daionet.gr.jp>  Wed, 10 Oct 2018 11:38:33 +0900
-""" % (VERSION, debian_version))
+""" % (debian_version, VERSION))
     # install
     fname = os.path.join(rootdir, 'mecab-ipadic-neologd.install')
     with open(fname, 'w') as f:
@@ -163,6 +163,20 @@ def copy_csv_files(git_dir, debian_dir):
     fname = os.path.join(dic_dir, "dicrc")
     shutil.copy(fname, bin_dist)
 
+def run_dpkg_buildpackage(pkg_dir):
+    cwd = pushd(pkg_dir)
+    cmd = "dpkg-buildpackage -b -uc -us"
+    os.system(cmd)
+    popd(cwd)
+
+def copy_deb(temp_dir):
+    cwd = pushd(temp_dir)
+    pat = "mecab-ipadic-neologd*.deb"
+    files = glob.glob(pat)
+    for fname in files:
+        shutil.copy(fname, cwd)
+    popd(cwd)
+
 def make_pkg_binary(work_dir, git_dir, date_str):
     with tempfile.TemporaryDirectory(dir=work_dir) as td:
         pkg_dir = os.path.join(td, "mecab-ipadic-neologd-%s" % date_str)
@@ -172,6 +186,8 @@ def make_pkg_binary(work_dir, git_dir, date_str):
         binary_debian_files(deb_dir, date_str)
         copy_bin_files(git_dir, deb_dir)
         copy_csv_files(git_dir, deb_dir)
+        run_dpkg_buildpackage(pkg_dir)
+        copy_deb(td)
 
 def get_args():
     p = argparse.ArgumentParser()
