@@ -10,6 +10,7 @@ import sys
 import logging
 import glob
 import tempfile
+import shutil
 
 neologd_url = "https://github.com/neologd/mecab-ipadic-neologd"
 VERSION = "0.1"
@@ -46,7 +47,7 @@ def build_on_git(gitdir):
     os.system(cmd)
     popd(cwd)
 
-def binary_debian_files(rootdir):
+def binary_debian_files(rootdir, debian_version):
     # compat
     fname = os.path.join(rootdir, 'compat')
     with open(fname, 'w') as f:
@@ -109,18 +110,43 @@ Description: Neologism dictionay for MeCab (csv format)
     # changelog
     fname = os.path.join(rootdir, 'control')
     with open(fname, 'w') as f:
-        f.write("""mecab-ipadic-neologd (0.0.6~20180505gitbb428d2ac-1) unstable; urgency=medium
+        f.write("""mecab-ipadic-neologd (0.0.0.1~%s-1) unstable; urgency=medium
 
   * packaged by make-neologd-pkg.py (%s)
 
  -- NOKUBI Takatsugu <knok@daionet.gr.jp>  Wed, 10 Oct 2018 11:38:33 +0900
-""" % VERSION)
+""" % (VERSION, debian_version))
 
-def make_pkg_binary(work_dir, date_str):
+def copy_bin_files(git_dir, debian_dir):
+    dic_dir = get_dic_fname(git_dir)
+    dic_dir = os.path.dirname(dic_dir)
+    # copy binary dictionary files
+    ## make package dir
+    bin_dist = os.path.join(debian_dir, "mecab-ipadic-neologd/var/lib/mecab/dic/ipadic-neologd")
+    os.makedirs(bin_dist, exist_ok=True)
+    ## copy files
+    ### .bin
+    pat = os.path.join(dic_dir, "*.bin")
+    files = glob.glob(pat)
+    for fname in files:
+        shutil.copy(fname, bin_dist)
+    ### .dic
+    pat = os.path.join(dic_dir, "*.dic")
+    files = glob.glob(pat)
+    for fname in files:
+        shutil.copy(fname, bin_dist)
+    ### dicrc
+    fname = os.path.join(dic_dir, "dicrc")
+    shutil.copy(fname, bin_dist)
+    
+def make_pkg_binary(work_dir, git_dir, date_str):
     with tempfile.TemporaryDirectory(dir=work_dir) as td:
         pkg_dir = os.path.join(td, "mecab-ipadic-neologd-%s" % date_str)
         os.makedirs(pkg_dir)
         deb_dir = os.path.join(pkg_dir, 'debian')
+        os.makedirs(deb_dir)
+        binary_debian_files(deb_dir, date_str)
+        copy_bin_files(git_dir, deb_dir)
 
 def get_args():
     p = argparse.ArgumentParser()
@@ -151,7 +177,7 @@ def main():
     # build debian binary package
     date_str = dic_fname[:-11] # remove /matrix
     date_str = date_str[-8:] # remove prefix
-    make_pkg_binary(args.work_dir, date_str)
+    make_pkg_binary(args.work_dir, git_dir, date_str)
 
 if __name__ == '__main__':
     main()
