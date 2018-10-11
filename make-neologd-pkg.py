@@ -75,14 +75,14 @@ argument.
 Section: text
 Priority: optional
 Build-Depends: debhelper (>= 10)
-Build-Depends-Indep: mecab-utils (>= 0.93), curl, git, libmecab-dev, xz
+Build-Depends-Indep: mecab-utils (>= 0.93), curl, git, libmecab-dev, xz-utils
 Maintainer: Natural Language Processing Japanese <team+pkgnlpja@tracker.debian.org>
 Uploaders: NOKUBI Takatsugu <knok@daionet.gr.jp>
 Standards-Version: 4.1.5
 Homepage: https://github.com/neologd/mecab-ipadic-neologd
 
 Package: mecab-ipadic-neologd
-Architecuture: any
+Architecture: any
 Pre-Depends: dpkg
 Depends: ${misc:Depends}, mecab (>= 0.93)
 Description: Neologism dictionay for MeCab (binary format)
@@ -93,7 +93,7 @@ Description: Neologism dictionay for MeCab (binary format)
  system dictionary and default one (ipadic) together.
 
 Package: mecab-ipadic-neologd-csv
-Architecuture: any
+Architecture: all
 Pre-Depends: dpkg
 Depends: ${misc:Depends}, mecab (>= 0.93)
 Description: Neologism dictionay for MeCab (csv format)
@@ -102,13 +102,13 @@ Description: Neologism dictionay for MeCab (csv format)
     # rules
     fname = os.path.join(rootdir, 'rules')
     with open(fname, 'w') as f:
-        f.write("""#!/usr/bin/make -f
+        f.write('''#!/usr/bin/make -f
 #
-%%:
+%:
 	dh $@
-""")
+''')
     # changelog
-    fname = os.path.join(rootdir, 'control')
+    fname = os.path.join(rootdir, 'changelog')
     with open(fname, 'w') as f:
         f.write("""mecab-ipadic-neologd (0.0.0.1~%s-1) unstable; urgency=medium
 
@@ -139,6 +139,26 @@ def copy_bin_files(git_dir, debian_dir):
     fname = os.path.join(dic_dir, "dicrc")
     shutil.copy(fname, bin_dist)
     
+def copy_csv_files(git_dir, debian_dir):
+    dic_dir = get_dic_fname(git_dir)
+    dic_dir = os.path.dirname(dic_dir)
+    # copy csv dictionary files
+    ## make package dir
+    bin_dist = os.path.join(debian_dir, "mecab-ipadic-neologd-csv/var/lib/mecab/dic/ipadic-neologd")
+    os.makedirs(bin_dist, exist_ok=True)
+    ## make package dir
+    bin_dist = os.path.join(debian_dir, "mecab-ipadic-neologd-csv/var/lib/mecab/dic/ipadic-neologd")
+    os.makedirs(bin_dist, exist_ok=True)
+    ## copy files
+    ### .csv
+    pat = os.path.join(dic_dir, "*.csv")
+    files = glob.glob(pat)
+    for fname in files:
+        shutil.copy(fname, bin_dist)
+    ### dicrc
+    fname = os.path.join(dic_dir, "dicrc")
+    shutil.copy(fname, bin_dist)
+
 def make_pkg_binary(work_dir, git_dir, date_str):
     with tempfile.TemporaryDirectory(dir=work_dir) as td:
         pkg_dir = os.path.join(td, "mecab-ipadic-neologd-%s" % date_str)
@@ -147,6 +167,9 @@ def make_pkg_binary(work_dir, git_dir, date_str):
         os.makedirs(deb_dir)
         binary_debian_files(deb_dir, date_str)
         copy_bin_files(git_dir, deb_dir)
+        copy_csv_files(git_dir, deb_dir)
+        import pdb; pdb.set_trace();
+        pass
 
 def get_args():
     p = argparse.ArgumentParser()
