@@ -61,14 +61,16 @@ def get_dic_fname(git_dir):
         return None
     pat = os.path.join(build_dir, "mecab-ipadic-2.7.0-*-neologd-*")
     dir_list = glob.glob(pat)
+    if len(dir_list) == 0:
+        return None
     dir_list.sort()
     ret = os.path.join(dir_list[-1], "matrix.bin")
     return ret
 
 def build_on_git(gitdir):
     cwd = pushd(gitdir)
-    cmd = "./libexec/make-mecab-ipadic-neologd.sh"
-    os.system(cmd)
+    cmd = ["./libexec/make-mecab-ipadic-neologd.sh"]
+    subprocess.check_call(cmd)
     popd(cwd)
 
 def binary_debian_files(rootdir, debian_version, upstream_date):
