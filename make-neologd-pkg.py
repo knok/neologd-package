@@ -38,7 +38,7 @@ def get_commit(git_dir, date):
     cmd.append("--before=%s" % date)
     output = subprocess.check_output(cmd)
     popd(cwd)
-    return output[:-1]
+    return output[:-1].decode()
 
 def git_checkout(git_dir, commit):
     cwd = pushd(git_dir)
@@ -52,7 +52,8 @@ def git_get_lastdate(git_dir):
     cwd = pushd(git_dir)
     cmd = 'git log -1 --format=%cd --date=short'.split()
     date = subprocess.check_output(cmd)
-    return date[:-1]
+    popd(cwd)
+    return date[:-1].decode()
 
 def get_dic_fname(git_dir):
     build_dir = os.path.join(git_dir, "build")
@@ -70,7 +71,7 @@ def build_on_git(gitdir):
     os.system(cmd)
     popd(cwd)
 
-def binary_debian_files(rootdir, debian_version):
+def binary_debian_files(rootdir, debian_version, upstream_date):
     # compat
     fname = os.path.join(rootdir, 'compat')
     with open(fname, 'w') as f:
@@ -78,7 +79,7 @@ def binary_debian_files(rootdir, debian_version):
     # README.Debian
     fname = os.path.join(rootdir, 'README.debian')
     with open(fname, 'w') as f:
-        f.write("""mecab-ipadic-neologd for Debian
+        f.write("""mecab-ipadic-neologd-%s for Debian
 ---------------------------------------------
 mecab-ipadic-NEologd is customized system dictionary for MeCab.
 
@@ -88,23 +89,23 @@ extracted from many language resources on the Web.
 When you analyze the Web documents, it's better to use this system
 dictionary and default one (ipadic) together.
 
-You can use the dictionary with -d /var/lib/mecab/dic/ipadic-neologd
-argument.
-""")
+You can use the dictionary with 
+-d /var/lib/mecab/dic/ipadic-neologd-%s argument.
+        """ % (upstream_date, upstream_date))
     # control
     fname = os.path.join(rootdir, 'control')
     with open(fname, 'w') as f:
-        f.write("""Source: mecab-ipadic-neologd
+        f.write("""Source: mecab-ipadic-neologd-%s
 Section: text
 Priority: optional
 Build-Depends: debhelper (>= 10)
-Build-Depends-Indep: mecab-utils (>= 0.93), curl, git, libmecab-dev, xz-utils
+Build-Depends-Indep: mecab-utils (>= 0.93), curl, libmecab-dev
 Maintainer: Natural Language Processing Japanese <team+pkgnlpja@tracker.debian.org>
 Uploaders: NOKUBI Takatsugu <knok@daionet.gr.jp>
 Standards-Version: 4.1.5
 Homepage: https://github.com/neologd/mecab-ipadic-neologd
 
-Package: mecab-ipadic-neologd
+Package: mecab-ipadic-neologd-%s
 Architecture: any
 Pre-Depends: dpkg
 Depends: ${misc:Depends}, mecab (>= 0.93)
@@ -115,13 +116,13 @@ Description: Neologism dictionay for MeCab (binary format)
  When you analyze the Web documents, it's better to use this
  system dictionary and default one (ipadic) together.
 
-Package: mecab-ipadic-neologd-csv
+Package: mecab-ipadic-neologd-csv-%s
 Architecture: all
 Pre-Depends: dpkg
 Depends: ${misc:Depends}, mecab (>= 0.93)
 Description: Neologism dictionay for MeCab (csv format)
  The dictionary source csv files derived from the original ipadic.
-""")
+        """ % (upstream_date, upstream_date, upstream_date))
     # rules
     fname = os.path.join(rootdir, 'rules')
     with open(fname, 'w') as f:
@@ -133,26 +134,26 @@ Description: Neologism dictionay for MeCab (csv format)
     # changelog
     fname = os.path.join(rootdir, 'changelog')
     with open(fname, 'w') as f:
-        f.write("""mecab-ipadic-neologd (0.0.0.1~%s-1) unstable; urgency=medium
+        f.write("""mecab-ipadic-neologd-%s (0.0.0.1~%s-1) unstable; urgency=medium
 
   * packaged by make-neologd-pkg.py (%s)
 
  -- NOKUBI Takatsugu <knok@daionet.gr.jp>  Wed, 10 Oct 2018 11:38:33 +0900
-""" % (debian_version, VERSION))
+""" % (upstream_date, debian_version, VERSION))
     # install
-    fname = os.path.join(rootdir, 'mecab-ipadic-neologd.install')
+    fname = os.path.join(rootdir, 'mecab-ipadic-neologd-%s.install' % upstream_date)
     with open(fname, 'w') as f:
-        f.write('var/lib/mecab/dic/ipadic-neologd/*')
-    fname = os.path.join(rootdir, 'mecab-ipadic-neologd-csv.install')
+        f.write('var/lib/mecab/dic/ipadic-neologd-%s/*' % upstream_date)
+    fname = os.path.join(rootdir, 'mecab-ipadic-neologd-csv-%s.install' % upstream_date)
     with open(fname, 'w') as f:
-        f.write('usr/share/mecab/dic/ipadic-neologd/*')
+        f.write('usr/share/mecab/dic/ipadic-neologd-%s/*' % upstream_date)
 
-def copy_bin_files(git_dir, debian_dir):
+def copy_bin_files(git_dir, debian_dir, upstream_date):
     dic_dir = get_dic_fname(git_dir)
     dic_dir = os.path.dirname(dic_dir)
     # copy binary dictionary files
     ## make package dir
-    bin_dist = os.path.join(debian_dir, "../var/lib/mecab/dic/ipadic-neologd")
+    bin_dist = os.path.join(debian_dir, "../var/lib/mecab/dic/ipadic-neologd-%s" % upstream_date)
     os.makedirs(bin_dist, exist_ok=True)
     ## copy files
     ### .bin
@@ -169,12 +170,12 @@ def copy_bin_files(git_dir, debian_dir):
     fname = os.path.join(dic_dir, "dicrc")
     shutil.copy(fname, bin_dist)
     
-def copy_csv_files(git_dir, debian_dir):
+def copy_csv_files(git_dir, debian_dir, upstream_date):
     dic_dir = get_dic_fname(git_dir)
     dic_dir = os.path.dirname(dic_dir)
     # copy csv dictionary files
     ## make package dir
-    bin_dist = os.path.join(debian_dir, "../usr/share/mecab/dic/ipadic-neologd")
+    bin_dist = os.path.join(debian_dir, "../usr/share/mecab/dic/ipadic-neologd-%s" % upstream_date)
     os.makedirs(bin_dist, exist_ok=True)
     ## copy files
     ### .csv
@@ -200,15 +201,15 @@ def copy_deb(temp_dir):
         shutil.copy(fname, cwd)
     popd(cwd)
 
-def make_pkg_binary(work_dir, git_dir, date_str):
+def make_pkg_binary(work_dir, git_dir, date_str, ver_date):
     with tempfile.TemporaryDirectory(dir=work_dir) as td:
-        pkg_dir = os.path.join(td, "mecab-ipadic-neologd-%s" % date_str)
+        pkg_dir = os.path.join(td, "mecab-ipadic-neologd-%s" % ver_date)
         os.makedirs(pkg_dir)
         deb_dir = os.path.join(pkg_dir, 'debian')
         os.makedirs(deb_dir)
-        binary_debian_files(deb_dir, date_str)
-        copy_bin_files(git_dir, deb_dir)
-        copy_csv_files(git_dir, deb_dir)
+        binary_debian_files(deb_dir, date_str, ver_date)
+        copy_bin_files(git_dir, deb_dir, ver_date)
+        copy_csv_files(git_dir, deb_dir, ver_date)
         run_dpkg_buildpackage(pkg_dir)
         copy_deb(td)
 
@@ -251,7 +252,7 @@ def main():
     # build debian binary package
     date_str = dic_fname[:-11] # remove /matrix
     date_str = date_str[-8:] # remove prefix
-    make_pkg_binary(args.work_dir, git_dir, date_str)
+    make_pkg_binary(args.work_dir, git_dir, date_str, ver_date)
 
 if __name__ == '__main__':
     main()
