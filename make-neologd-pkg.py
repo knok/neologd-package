@@ -11,6 +11,7 @@ import logging
 import glob
 import tempfile
 import shutil
+import subprocess
 
 neologd_url = "https://github.com/neologd/mecab-ipadic-neologd"
 VERSION = "0.1"
@@ -30,6 +31,28 @@ def git_clone(workdir, depth):
         cmd += " --depth %d" % depth
     os.system(cmd)
     popd(cwd)
+
+def get_commit(git_dir, date):
+    cwd = pushd(git_dir)
+    cmd = "git rev-list master -n 1 --first-parent".split()
+    cmd.append("--before=%s" % date)
+    output = subprocess.check_output(cmd)
+    popd(cwd)
+    return output[:-1]
+
+def git_checkout(git_dir, commit):
+    cwd = pushd(git_dir)
+    cmd = "git checkout".split()
+    cmd.append(commit)
+    subprocess.check_call(cmd)
+    popd(cwd)
+    return
+
+def git_get_lastdate(git_dir):
+    cwd = pushd(git_dir)
+    cmd = 'git log -1 --format=%cd --date=short'.split()
+    date = subprocess.check_output(cmd)
+    return date[:-1]
 
 def get_dic_fname(git_dir):
     build_dir = os.path.join(git_dir, "build")
@@ -193,6 +216,8 @@ def get_args():
     p = argparse.ArgumentParser()
     p.add_argument('--work-dir', default='/var/tmp')
     p.add_argument('--depth', default=-1, type=int)
+    p.add_argument('--date', default=None,
+                   help='specify checkout version by date string (YYYY-MM-DD)')
     args = p.parse_args()
     return args
 
@@ -206,6 +231,14 @@ def main():
         logging.info("Directory %s exists, skip clone" % git_dir)
     else:
         git_clone(args.work_dir, args.depth)
+
+    # get version or date
+    if args.date is not None:
+        ch = get_commit(git_dir, args.date)
+        ver_date = args.date
+        git_checkout(git_dir, ch)
+    else:
+        ver_date = git_get_lastdate(git_dir)
 
     # build on git repo
     dic_fname = get_dic_fname(git_dir)
