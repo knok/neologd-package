@@ -48,6 +48,16 @@ def git_checkout(git_dir, commit):
     popd(cwd)
     return
 
+def clean_git_build_dir(git_dir):
+    cwd = pushd(git_dir)
+    # get build/mecab-ipadic-$ver-$date
+    dirs = glob.glob("build/mecab-ipadic-*-*")
+    for d in dirs:
+        if os.path.isdir(d):
+            shutil.rmtree(d)
+    popd(cwd)
+    return
+
 def git_get_lastdate(git_dir):
     cwd = pushd(git_dir)
     cmd = 'git log -1 --format=%cd --date=short'.split()
@@ -219,8 +229,10 @@ def get_args():
     p = argparse.ArgumentParser()
     p.add_argument('--work-dir', default='/var/tmp')
     p.add_argument('--depth', default=-1, type=int)
-    p.add_argument('--date', default=None,
+    p.add_argument('--date', '-d', default=None,
                    help='specify checkout version by date string (YYYY-MM-DD)')
+    p.add_argument('--commit', '-c', default=None,
+                   help="specify commit hash")
     args = p.parse_args()
     return args
 
@@ -236,10 +248,15 @@ def main():
         git_clone(args.work_dir, args.depth)
 
     # get version or date
-    if args.date is not None:
+    if args.commit is not None:
+        git_checkout(git_dir, args.commit)
+        ver_date = git_get_lastdate(git_dir)
+        clean_git_build_dir(git_dir)
+    elif args.date is not None:
         ch = get_commit(git_dir, args.date)
         ver_date = args.date
         git_checkout(git_dir, ch)
+        clean_git_build_dir(git_dir)
     else:
         ver_date = git_get_lastdate(git_dir)
 
