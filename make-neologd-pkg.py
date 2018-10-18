@@ -69,7 +69,7 @@ def get_dic_fname(git_dir):
 
 def build_on_git(gitdir):
     cwd = pushd(gitdir)
-    cmd = ["./libexec/make-mecab-ipadic-neologd.sh"]
+    cmd = ["./bin/install-mecab-ipadic-neologd", "-y"]
     subprocess.check_call(cmd)
     popd(cwd)
 
