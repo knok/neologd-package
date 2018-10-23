@@ -167,6 +167,89 @@ Description: Neologism dictionay for MeCab (csv format)
     fname = os.path.join(rootdir, 'mecab-ipadic-neologd-csv-%s.install' % upstream_date)
     with open(fname, 'w') as f:
         f.write('usr/share/mecab/dic/ipadic-neologd-%s/*' % upstream_date)
+    # Maintianer files
+    # postinst
+    fname = os.path.join(rootdir, 'postinst')
+    with open(fname, 'w') as f:
+        f.write("""#!/bin/sh
+# postinst
+set -e
+case "$1" in
+        configure)
+            CWD=`pwd`
+            # find latest version
+            cd /var/lib/mecab/dic
+            LATEST=ipadic-neologd-0000-00-00
+            for d in ipadic-neologd-* ; do
+                if [ -d "$d" ] ; then
+                    SRC=${LATEST#*-*-}
+                    DST=${d#*-*-}
+                    if dpkg --compare-versions $SRC '<<' $DST ; then
+                        LATEST=$d
+                    fi
+                fi
+            done
+            # make symlink
+            TARGET=/var/lib/mecab/dic/ipadic-neologd
+            if [ -L $TARGET ] ; then
+                rm $TARGET
+            fi
+            ln -s /var/lib/mecab/dic/$LATEST $TARGET
+            cd $CWD
+            ;;
+        abort-upgrade|abort-remove|abort-deconfigure)
+		;;
+        *)
+        	echo "postinst called with unknown argument \`$1'" >&2
+        	exit 1
+	;;        
+esac
+#
+#DEBHELPER#
+exit 0
+""")
+    # postrm
+    fname = os.path.join(rootdir, 'postrm')
+    with open(fname, 'w') as f:
+        f.write("""#!/bin/sh
+# postrm
+set -e
+case "$1" in
+        remove|upgrade|deconfigure|purge)
+            CWD=`pwd`
+            # find latest version
+            cd /var/lib/mecab/dic
+            LATEST=ipadic-neologd-0000-00-00
+            for d in ipadic-neologd-* ; do
+                if [ -d "$d" ] ; then
+                    SRC=${LATEST#*-*-}
+                    DST=${d#*-*-}
+                    if dpkg --compare-versions $SRC '<<' $DST ; then
+                        LATEST=$d
+                    fi
+                fi
+            done
+            # make symlink
+            TARGET=/var/lib/mecab/dic/ipadic-neologd
+            if [ -L $TARGET ] ; then
+                rm $TARGET
+            fi
+            if [ -d /var/lib/mecab/dic/$LATEST ] ; then
+                ln -s /var/lib/mecab/dic/$LATEST $TARGET
+            fi
+            cd $CWD
+            ;;
+        failed-upgrade)
+		;;
+        *)
+        	echo "postrm called with unknown argument \`$1'" >&2
+        	exit 1
+	;;        
+esac
+#
+#DEBHELPER#
+exit 0
+""")
 
 def copy_bin_files(git_dir, debian_dir, upstream_date):
     dic_dir = get_dic_fname(git_dir)
