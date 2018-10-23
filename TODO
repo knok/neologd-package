@@ -1,5 +1,4 @@
 TODO
 
 * invoke update-alternatives on postinst/prerm
-* build any commits/tags package by commandline option
 * log level option
