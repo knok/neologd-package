@@ -32,6 +32,14 @@ def git_clone(workdir, depth):
     os.system(cmd)
     popd(cwd)
 
+def git_newest(git_dir):
+    cwd = pushd(git_dir)
+    cmd = "git fetch origin".split()
+    subprocess.call(cmd)
+    cmd = "git reset --hard origin/master".split()
+    subprocess.check_call(cmd)
+    popd(cwd)
+
 def get_commit(git_dir, date):
     cwd = pushd(git_dir)
     cmd = "git rev-list master -n 1 --first-parent".split()
@@ -233,6 +241,8 @@ def get_args():
                    help='specify checkout version by date string (YYYY-MM-DD)')
     p.add_argument('--commit', '-c', default=None,
                    help="specify commit hash")
+    p.add_argument('--newest', '-n', default=False, action="store_true",
+                   help="update git repo to newest")
     args = p.parse_args()
     return args
 
@@ -247,8 +257,12 @@ def main():
     else:
         git_clone(args.work_dir, args.depth)
 
-    # get version or date
-    if args.commit is not None:
+    # newest or get version or specify by date
+    if args.newest:
+        git_newest(git_dir)
+        ver_date = git_get_lastdate(git_dir)
+        clean_git_build_dir(git_dir)
+    elif args.commit is not None:
         git_checkout(git_dir, args.commit)
         ver_date = git_get_lastdate(git_dir)
         clean_git_build_dir(git_dir)
