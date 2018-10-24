@@ -15,6 +15,7 @@ import subprocess
 
 neologd_url = "https://github.com/neologd/mecab-ipadic-neologd"
 VERSION = "0.2"
+PRIORITY = 75
 
 def pushd(newdir):
     cwd = os.path.abspath(".")
@@ -196,6 +197,10 @@ case "$1" in
             fi
             ln -s /var/lib/mecab/dic/$LATEST $TARGET
             cd $CWD
+            update-alternatives \
+            --install /var/lib/mecab/dic/debian mecab-dictionary \
+            $TARGET %d
+
             ;;
         abort-upgrade|abort-remove|abort-deconfigure)
 		;;
@@ -207,7 +212,7 @@ esac
 #
 #DEBHELPER#
 exit 0
-""")
+""" % PRIORITY)
     # postrm
     fname = os.path.join(rootdir, 'postrm')
     with open(fname, 'w') as f:
@@ -236,6 +241,8 @@ case "$1" in
             fi
             if [ -d /var/lib/mecab/dic/$LATEST ] ; then
                 ln -s /var/lib/mecab/dic/$LATEST $TARGET
+            else
+                update-alternatives --remove mecab-dictionary $TARGET
             fi
             cd $CWD
             ;;
