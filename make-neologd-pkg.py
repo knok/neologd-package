@@ -14,7 +14,7 @@ import shutil
 import subprocess
 
 neologd_url = "https://github.com/neologd/mecab-ipadic-neologd"
-VERSION = "0.2"
+VERSION = "0.3"
 PRIORITY = 75
 
 def pushd(newdir):
