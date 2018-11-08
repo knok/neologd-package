@@ -119,7 +119,7 @@ You can use the dictionary with
         f.write("""Source: mecab-ipadic-neologd-%s
 Section: text
 Priority: optional
-Build-Depends: debhelper (>= 10)
+Build-Depends: debhelper (>= 9)
 Build-Depends-Indep: mecab-utils (>= 0.93), curl, libmecab-dev
 Maintainer: Natural Language Processing Japanese <team+pkgnlpja@tracker.debian.org>
 Uploaders: NOKUBI Takatsugu <knok@daionet.gr.jp>
