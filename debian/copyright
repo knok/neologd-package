@@ -1,0 +1,7 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: fasttext
+Source: https://github.com/knok/neologd-package.git
+
+Files: *
+Copyright: 2018-2019, NOKUBI Takatsugu
+License: Apache-2.0 or GPL3+ or BSD-3-clause
